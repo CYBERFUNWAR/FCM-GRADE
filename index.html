@@ -1100,7 +1100,7 @@ function handlePrint(belt, candidate) {
       } catch (e) {
       }
     }, 200);
-    console.warn(
+    console.log(
       "[Karat\xE9 FC] Pop-up bloqu\xE9. Fiche t\xE9l\xE9charg\xE9e en HTML \u2014 ouvre-la puis Ctrl+P / Cmd+P pour imprimer ou exporter en PDF."
     );
   } catch (err) {
@@ -2000,13 +2000,20 @@ function App() {
 
   // ── Patcher window.storage avec Firebase ──
   function patchStorage() {
-    if (typeof firebase === 'undefined') {
-      console.info('Firebase absent — mode localStorage');
-      setBar(false, 'Mode local (Firebase non disponible)');
+    if (typeof firebase === 'undefined' || typeof firebase.initializeApp !== 'function') {
+      console.log('Firebase SDK absent — mode localStorage actif');
+      setBar(false, 'Mode local — Firebase non chargé');
+      return;
+    }
+    if (typeof firebase.firestore !== 'function') {
+      console.log('Firebase Firestore absent — mode localStorage actif');
+      setBar(false, 'Mode local — Firestore non chargé');
       return;
     }
     try {
-      var app = firebase.initializeApp(FB_CFG);
+      var app = firebase.apps && firebase.apps.length > 0
+        ? firebase.apps[0]
+        : firebase.initializeApp(FB_CFG);
       var db  = firebase.firestore(app);
       var lastSave = 0;
       window.storage = {
@@ -2028,7 +2035,7 @@ function App() {
           var u = {}; u[key] = value; u._ts = lastSave;
           return db.collection('kfc_eval').doc('shared')
             .set(u, { merge: true })
-            .catch(function(e) { console.warn('FB set:', e.code); });
+            .catch(function(e) { console.log('FB set:', e.code); });
         },
         delete: function(key) {
           try { localStorage.removeItem(key); } catch(e) {}
@@ -2041,14 +2048,14 @@ function App() {
       // Tester la connexion avec un ping Firestore
       db.collection('kfc_eval').doc('shared').get()
         .then(function() {
-          setBar(true, '🔥 Firebase connecté — Sync activée');
-          console.log('✅ Firebase connecté — Évaluations FCM');
+          setBar(true, 'Firebase connecté — Sync activée');
+          console.log('Firebase connecté — Évaluations FCM');
         })
         .catch(function(e) {
-          setBar(false, '⚠️ Firebase : ' + (e.code || e.message));
+          setBar(false, 'Erreur Firebase : ' + (e.code || e.message));
         });
     } catch(e) {
-      console.warn('Firebase init error:', e.message);
+      console.log('Firebase init error:', e.message);
       setBar(false, 'Erreur Firebase : ' + e.message);
     }
   }
@@ -2082,7 +2089,7 @@ function App() {
       // Patcher window.storage avec Firebase avant de lancer React
       patchStorage();
       if (typeof window.__bootApp__ !== 'function') {
-        throw new Error('Code de l'application introuvable.');
+        throw new Error("Code de l'application introuvable.");
       }
       window.__bootApp__();
       requestAnimationFrame(function() {
@@ -2096,13 +2103,17 @@ function App() {
   }
 
   // ── Chaîne de chargement : Firebase → React → ReactDOM → boot() ──
+  // Firebase avec 3 CDN de secours
   loadScript([
-    'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js'
-  ], function() {
-    // Firebase app-compat chargé (ou échoué — on continue quand même)
+    'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js',
+    'https://cdn.jsdelivr.net/npm/firebase@9.23.0/compat/app/index.js',
+    'https://unpkg.com/firebase@9.23.0/compat/app/index.js'
+  ], function(errFbApp) {
     loadScript([
-      'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js'
-    ], function() {
+      'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js',
+      'https://cdn.jsdelivr.net/npm/firebase@9.23.0/compat/firestore/index.js',
+      'https://unpkg.com/firebase@9.23.0/compat/firestore/index.js'
+    ], function(errFbFs) {
       // React (obligatoire)
       loadScript([
         'https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js',
