@@ -34,19 +34,23 @@
     #boot-error ul { margin: 8px 0; padding-left: 22px; }
     #boot-error pre { background:#fff; padding:8px 10px; border-radius:5px; font-size:11px; overflow:auto; max-height:180px; margin-top:10px; }
   </style>
+  <style>
+    #fb-bar ~ #boot,
+    #fb-bar ~ * { }
+    body.fb-connected { padding-top: 28px; }
+  </style>
 </head>
 <body>
 
-<!-- MOT DE PASSE -->
 <div id="pw-overlay" style="position:fixed;inset:0;background:#1F1F1F;display:flex;align-items:center;justify-content:center;z-index:99999;padding:20px;transition:opacity .3s">
   <div style="background:white;border-radius:12px;width:100%;max-width:340px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.7)">
     <div style="background:#1F1F1F;padding:20px;text-align:center;border-bottom:3px solid #F59E0B">
-      <div style="font-size:10px;font-weight:900;background:#F59E0B;color:#1F1F1F;display:inline-block;padding:2px 10px;border-radius:2px;letter-spacing:1px;margin-bottom:8px">KARATÉ FULL CONTACT</div>
+      <div style="font-size:9px;font-weight:900;background:#F59E0B;color:#1F1F1F;display:inline-block;padding:2px 10px;border-radius:2px;letter-spacing:1px;margin-bottom:7px">KARATÉ FULL CONTACT</div>
       <div style="font-size:18px;font-weight:700;color:white;letter-spacing:1px">ÉVALUATION GRADES</div>
       <div style="font-size:11px;color:rgba(255,255,255,.6);margin-top:3px">FCM Team Fontarosa</div>
     </div>
     <div style="padding:22px">
-      <p style="font-size:12px;color:#666;margin-bottom:16px;text-align:center">Accès réservé aux professeurs du club.</p>
+      <p style="font-size:12px;color:#666;margin-bottom:15px;text-align:center">Accès réservé aux professeurs du club.</p>
       <label style="font-size:10px;font-weight:700;color:#1F1F1F;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">Mot de passe</label>
       <input id="pw-input" type="password" placeholder="••••••••" autocomplete="current-password"
         style="width:100%;border:1.5px solid #CCC;border-radius:6px;padding:11px 13px;font-size:18px;outline:none;margin-bottom:7px;box-sizing:border-box;-webkit-appearance:none"
@@ -59,35 +63,31 @@
     </div>
   </div>
 </div>
-
 <script>
-// Auth — défini immédiatement
-var APP_PASSWORD = 'FCM1984';
-var KAUTH = 'fcm_eval_auth';
-function checkAuth(){
-  try{ var d=JSON.parse(localStorage.getItem(KAUTH)||'{}'); return d.ok===true&&Date.now()<(d.expiry||0); }catch(e){return false;}
-}
-function unlockApp(){
-  var ov=document.getElementById('pw-overlay');
-  if(ov){ov.style.opacity='0';setTimeout(function(){ov.style.display='none';},280);}
-}
-function pwLogin(){
-  var inp=document.getElementById('pw-input');
-  if(!inp)return;
-  if(inp.value===APP_PASSWORD){
-    localStorage.setItem(KAUTH,JSON.stringify({ok:true,expiry:Date.now()+24*3600*1000}));
-    unlockApp();
-  }else{
-    document.getElementById('pw-err').style.display='block';
-    inp.value=''; inp.focus();
-    inp.style.borderColor='#DC2626';
-    setTimeout(function(){inp.style.borderColor='#CCC';},1500);
-  }
-}
-function logout(){ localStorage.removeItem(KAUTH); location.reload(); }
-if(checkAuth()){ unlockApp(); }
-else{ setTimeout(function(){ var el=document.getElementById('pw-input'); if(el)el.focus(); },150); }
+var _PW='FCM1984',_KA='fcm_eval_auth';
+function _chk(){try{var d=JSON.parse(localStorage.getItem(_KA)||'{}');return d.ok&&Date.now()<(d.exp||0);}catch(e){return false;}}
+function _unlock(){var o=document.getElementById('pw-overlay');if(o){o.style.opacity='0';setTimeout(function(){o.style.display='none';},280);}}
+function pwLogin(){var i=document.getElementById('pw-input');if(!i)return;if(i.value===_PW){localStorage.setItem(_KA,JSON.stringify({ok:true,exp:Date.now()+86400000}));_unlock();}else{document.getElementById('pw-err').style.display='block';i.value='';i.focus();i.style.borderColor='#DC2626';setTimeout(function(){i.style.borderColor='#CCC';},1400);}}
+function logout(){localStorage.removeItem(_KA);location.reload();}
+if(_chk())_unlock();else setTimeout(function(){var e=document.getElementById('pw-input');if(e)e.focus();},150);
 </script>
+
+  <!-- Indicateur de connexion Firebase -->
+  <div id="fb-bar" style="
+    display:none;
+    position:fixed;top:0;left:0;right:0;
+    z-index:9000;
+    padding:5px 14px;
+    font-size:11px;font-weight:600;font-family:'Segoe UI',sans-serif;
+    align-items:center;justify-content:space-between;gap:8px;
+    box-shadow:0 1px 4px rgba(0,0,0,.2);
+  ">
+    <div style="display:flex;align-items:center;gap:7px">
+      <div id="fb-dot" style="width:8px;height:8px;border-radius:50%;background:#A3A3A3;flex-shrink:0"></div>
+      <span id="fb-label">Firebase…</span>
+    </div>
+    <button onclick="logout()" style="background:rgba(0,0,0,.12);border:none;border-radius:4px;padding:3px 10px;font-size:10px;font-weight:700;cursor:pointer;color:inherit;letter-spacing:.3px">🔒 Déconnexion</button>
+  </div>
 
   <div id="boot">
     <div id="boot-spinner">
@@ -1060,89 +1060,6 @@ function handlePrint(belt, candidate) {
       setTimeout(function(){ try { window.print(); } catch(e) {} }, 400);
     });
   <\/script>
-
-<!-- Firebase — chargé APRÈS React pour ne pas bloquer -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script>
-(function(){
-  var FIREBASE_CONFIG = {
-    apiKey:            "AIzaSyDrASw_iU1DW6G24M7yxKZigeREYa5zOwk",
-    authDomain:        "fcm-full-contact.firebaseapp.com",
-    projectId:         "fcm-full-contact",
-    storageBucket:     "fcm-full-contact.firebasestorage.app",
-    messagingSenderId: "869806093128",
-    appId:             "1:869806093128:web:401ff1e388fd0bc583397d"
-  };
-
-  // Attendre que l'app React soit montée (~1s), puis patcher window.storage
-  function patchStorage(){
-    if(typeof firebase==='undefined'||!firebase.firestore){
-      console.warn('Firebase indisponible — mode local conservé');
-      return;
-    }
-    try{
-      if(firebase.apps.length>0) firebase.apps.forEach(function(a){try{a.delete();}catch(e){}});
-      var app = firebase.initializeApp(FIREBASE_CONFIG);
-      var db  = firebase.firestore(app);
-      var COL = 'kfc_eval';
-      var DOC = 'shared';
-      var lastSave = 0;
-
-      // Remplacer window.storage par Firebase
-      window.storage = {
-        get: function(key){
-          return db.collection(COL).doc(DOC).get()
-            .then(function(doc){
-              if(!doc.exists) return null;
-              var v = doc.data()[key];
-              return v ? {value:v} : null;
-            })
-            .catch(function(){
-              // Fallback localStorage
-              try{ var v=localStorage.getItem(key); return v?{value:v}:null; }catch(e){return null;}
-            });
-        },
-        set: function(key,value){
-          lastSave = Date.now();
-          // Toujours sauvegarder en local aussi
-          try{ localStorage.setItem(key,value); }catch(e){}
-          var upd={}; upd[key]=value; upd._ts=lastSave;
-          return db.collection(COL).doc(DOC).set(upd,{merge:true})
-            .catch(function(e){ console.warn('Firebase set:',e.code); });
-        },
-        delete: function(key){
-          try{ localStorage.removeItem(key); }catch(e){}
-          try{
-            var upd={}; upd[key]=firebase.firestore.FieldValue.delete();
-            return db.collection(COL).doc(DOC).update(upd).catch(function(){});
-          }catch(e){ return Promise.resolve(); }
-        }
-      };
-
-      // Écoute temps réel : proposer rechargement si un autre prof a modifié
-      db.collection(COL).doc(DOC).onSnapshot(function(snap){
-        var d=snap.data();
-        if(d && d._ts && (d._ts > lastSave+10000)){
-          // Recharger silencieusement les données dans React
-          // (React re-lira window.storage au prochain save)
-          console.log('🔄 Données mises à jour par un autre prof');
-        }
-      }, function(err){ console.warn('onSnapshot:',err.code); });
-
-      console.log('✅ Firebase connecté — Évaluations FCM');
-    }catch(e){
-      console.warn('Firebase init échoué, mode local:', e.message);
-    }
-  }
-
-  // Patcher APRÈS que React soit monté (le boot loader React prend ~500ms)
-  window.addEventListener('load', function(){
-    setTimeout(patchStorage, 800);
-  });
-
-})();
-</script>
 </body>
 </html>`;
   let w = null;
@@ -2055,6 +1972,88 @@ function App() {
 
   <script>
 (function() {
+
+  // ── Config Firebase ──
+  var FB_CFG = {
+    apiKey:            "AIzaSyDrASw_iU1DW6G24M7yxKZigeREYa5zOwk",
+    authDomain:        "fcm-full-contact.firebaseapp.com",
+    projectId:         "fcm-full-contact",
+    storageBucket:     "fcm-full-contact.firebasestorage.app",
+    messagingSenderId: "869806093128",
+    appId:             "1:869806093128:web:401ff1e388fd0bc583397d"
+  };
+
+  // ── Helpers indicateur ──
+  function setBar(ok, msg) {
+    var bar   = document.getElementById('fb-bar');
+    var dot   = document.getElementById('fb-dot');
+    var label = document.getElementById('fb-label');
+    if (!bar) return;
+    bar.style.display     = 'flex';
+    bar.style.background  = ok ? '#ECFDF5' : '#FEF2F2';
+    bar.style.color       = ok ? '#065F46' : '#991B1B';
+    dot.style.background  = ok ? '#10B981' : '#EF4444';
+    label.textContent     = msg;
+    if (ok) document.body.classList.add('fb-connected');
+    else    document.body.classList.remove('fb-connected');
+  }
+
+  // ── Patcher window.storage avec Firebase ──
+  function patchStorage() {
+    if (typeof firebase === 'undefined') {
+      console.info('Firebase absent — mode localStorage');
+      setBar(false, 'Mode local (Firebase non disponible)');
+      return;
+    }
+    try {
+      var app = firebase.initializeApp(FB_CFG);
+      var db  = firebase.firestore(app);
+      var lastSave = 0;
+      window.storage = {
+        get: function(key) {
+          return db.collection('kfc_eval').doc('shared').get()
+            .then(function(doc) {
+              if (!doc.exists) return null;
+              var v = doc.data()[key];
+              return v ? { value: v } : null;
+            })
+            .catch(function() {
+              try { var v = localStorage.getItem(key); return v ? { value: v } : null; }
+              catch(e) { return null; }
+            });
+        },
+        set: function(key, value) {
+          lastSave = Date.now();
+          try { localStorage.setItem(key, value); } catch(e) {}
+          var u = {}; u[key] = value; u._ts = lastSave;
+          return db.collection('kfc_eval').doc('shared')
+            .set(u, { merge: true })
+            .catch(function(e) { console.warn('FB set:', e.code); });
+        },
+        delete: function(key) {
+          try { localStorage.removeItem(key); } catch(e) {}
+          try {
+            var u = {}; u[key] = firebase.firestore.FieldValue.delete();
+            return db.collection('kfc_eval').doc('shared').update(u).catch(function(){});
+          } catch(e) { return Promise.resolve(); }
+        }
+      };
+      // Tester la connexion avec un ping Firestore
+      db.collection('kfc_eval').doc('shared').get()
+        .then(function() {
+          setBar(true, '🔥 Firebase connecté — Sync activée');
+          console.log('✅ Firebase connecté — Évaluations FCM');
+        })
+        .catch(function(e) {
+          setBar(false, '⚠️ Firebase : ' + (e.code || e.message));
+        });
+    } catch(e) {
+      console.warn('Firebase init error:', e.message);
+      setBar(false, 'Erreur Firebase : ' + e.message);
+    }
+  }
+
+  // ── Chargeur de scripts ──
   function loadScript(srcs, cb) {
     var i = 0;
     (function tryNext() {
@@ -2080,8 +2079,10 @@ function App() {
 
   function boot() {
     try {
+      // Patcher window.storage avec Firebase avant de lancer React
+      patchStorage();
       if (typeof window.__bootApp__ !== 'function') {
-        throw new Error('Code de l\'application introuvable.');
+        throw new Error('Code de l'application introuvable.');
       }
       window.__bootApp__();
       requestAnimationFrame(function() {
@@ -2089,24 +2090,36 @@ function App() {
         if (b) { b.style.opacity = '0'; setTimeout(function(){ b.remove(); }, 350); }
       });
     } catch (err) {
-      console.error('[Karaté FC] Erreur de démarrage:', err);
+      console.error('[Karaté FC] Erreur:', err);
       showError(err);
     }
   }
 
+  // ── Chaîne de chargement : Firebase → React → ReactDOM → boot() ──
   loadScript([
-    'https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js',
-    'https://unpkg.com/react@18.3.1/umd/react.production.min.js'
-  ], function(err) {
-    if (err) return showError(err);
+    'https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js'
+  ], function() {
+    // Firebase app-compat chargé (ou échoué — on continue quand même)
     loadScript([
-      'https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js',
-      'https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js'
-    ], function(err) {
-      if (err) return showError(err);
-      boot();
+      'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js'
+    ], function() {
+      // React (obligatoire)
+      loadScript([
+        'https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js',
+        'https://unpkg.com/react@18.3.1/umd/react.production.min.js'
+      ], function(err) {
+        if (err) return showError(err);
+        loadScript([
+          'https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js',
+          'https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js'
+        ], function(err) {
+          if (err) return showError(err);
+          boot();
+        });
+      });
     });
   });
+
 })();
   </script>
 </body>
