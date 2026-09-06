@@ -1863,8 +1863,8 @@ function HistoryView({ history, onReopen, onDelete, onExportAll, onClose }) {
     } }, isAdmis ? "\u2705 ADMIS" : "\u274C AJOURN\xC9"), /* @__PURE__ */ React.createElement("button", { onClick: () => onReopen(c.id), title: "Rouvrir / revoir", style: { background: "#F5F5F0", border: "none", borderRadius: 6, padding: "6px 10px", fontSize: 11, fontWeight: 700, color: "#525252", cursor: "pointer" } }, "\u{1F441}\uFE0F"), /* @__PURE__ */ React.createElement(
       "button",
       {
-        onClick: () => armDelete(c.id),
-        title: armedDeleteId === c.id ? "Cliquer encore pour confirmer" : "Supprimer de l'historique",
+        onClick: () => { if (window.EVAL_ROLE !== "admin") { alert("\u{1F512} La suppression d'archives est r\xE9serv\xE9e \xE0 l'administrateur."); return; } armDelete(c.id); },
+        title: armedDeleteId === c.id ? "Cliquer encore pour confirmer" : "Supprimer de l'historique (admin)",
         style: {
           background: armedDeleteId === c.id ? "#B91C1C" : "transparent",
           color: armedDeleteId === c.id ? "white" : "#A3A3A3",
@@ -2217,7 +2217,7 @@ function App() {
       fontSize: 11,
       cursor: "pointer",
       fontWeight: 700
-    } }, view === "eval" ? "\u{1F4CA} R\xE9sum\xE9" : "\u{1F4CB} \xC9val."), /* @__PURE__ */ React.createElement("button", { onClick: () => setConfirmReset(true), title: "R\xE9initialiser l'\xE9valuation en cours", style: {
+    } }, view === "eval" ? "\u{1F4CA} R\xE9sum\xE9" : "\u{1F4CB} \xC9val."), /* @__PURE__ */ React.createElement("button", { onClick: () => { if (window.EVAL_ROLE !== "admin") { alert("\u{1F512} La r\xE9initialisation est r\xE9serv\xE9e \xE0 l'administrateur."); return; } setConfirmReset(true); }, title: "R\xE9initialiser l'\xE9valuation en cours (admin)", style: {
       background: ov,
       border: `1px solid ${ovB}`,
       color: belt.text,
