@@ -47,8 +47,12 @@ window.CLUB = {
 
   /* ── Accès ────────────────────────────────────────────────────────── */
   motsDePasse : {
-    admin : "FCM1984",   // accès complet (responsable)
-    modo  : "FCM2627"    // enseignants — le même mot de passe que l'app de Suivi
+    admin : "FCM1984",   // secours HORS LIGNE uniquement (vérification réelle sur Firebase)
+    modo  : "FCM2627"
+  },
+  comptes : {
+    admin : "admin@fcm.cyberfun.fr",
+    modo  : "profs@fcm.cyberfun.fr"
   },
 
   /* ── Clés techniques de stockage ──────────────────────────────────── */
@@ -208,8 +212,23 @@ function selectEvalRole(r){
 }
 function _chk(){try{var d=JSON.parse(localStorage.getItem(_KA)||'{}');if(d.ok&&Date.now()<(d.exp||0)){window.EVAL_ROLE=d.role||'admin';return true;}return false;}catch(e){return false;}}
 function _unlock(){var o=document.getElementById('pw-overlay');if(o){o.style.opacity='0';setTimeout(function(){o.style.display='none';},280);}}
-function pwLogin(){var i=document.getElementById('pw-input');if(!i)return;var ok=(_evalRole==='admin'&&_PW_ADMIN&&i.value===_PW_ADMIN)||(_evalRole==='modo'&&_PW_MODO&&i.value===_PW_MODO);if(ok){localStorage.setItem(_KA,JSON.stringify({ok:true,role:_evalRole,exp:Date.now()+86400000}));window.EVAL_ROLE=_evalRole;_unlock();_resetIdle();}else{document.getElementById('pw-err').style.display='block';i.value='';i.focus();i.style.borderColor='#DC2626';setTimeout(function(){i.style.borderColor='#CCC';},1400);}}
-function logout(){localStorage.removeItem(_KA);location.reload();}
+function pwLogin(){var i=document.getElementById('pw-input');if(!i)return;
+  var val=i.value;
+  var grant=function(){localStorage.setItem(_KA,JSON.stringify({ok:true,role:_evalRole,exp:Date.now()+86400000}));window.EVAL_ROLE=_evalRole;_unlock();_resetIdle();};
+  var localOk=(_evalRole==='admin'&&_PW_ADMIN&&val===_PW_ADMIN)||(_evalRole==='modo'&&_PW_MODO&&val===_PW_MODO);
+  var email=(window.CLUB.comptes&&window.CLUB.comptes[_evalRole])||'';
+  if(window._fbAuth&&email&&navigator.onLine!==false){
+    window._fbAuth.signInWithEmailAndPassword(email,val)
+      .then(grant)
+      .catch(function(err){
+        var reseau=err&&(err.code==='auth/network-request-failed'||err.code==='auth/internal-error');
+        if(reseau&&localOk){grant();}
+        else{document.getElementById('pw-err').style.display='block';i.value='';i.focus();}
+      });
+    return;
+  }
+  if(localOk){grant();}else{document.getElementById('pw-err').style.display='block';i.value='';i.focus();i.style.borderColor='#DC2626';setTimeout(function(){i.style.borderColor='#CCC';},1400);}}
+function logout(){try{if(window._fbAuth)window._fbAuth.signOut();}catch(e){}localStorage.removeItem(_KA);location.reload();}
 try{selectEvalRole('modo');}catch(e){}
 
 // ── Déconnexion automatique après 30 min d'inactivité ──
@@ -2718,6 +2737,12 @@ function App() {
       'https://cdn.jsdelivr.net/npm/firebase@9.23.0/compat/firestore/index.js',
       'https://unpkg.com/firebase@9.23.0/compat/firestore/index.js'
     ], function(errFbFs) {
+    loadScript([
+      'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js',
+      'https://cdn.jsdelivr.net/npm/firebase@9.23.0/compat/auth/index.js',
+      'https://unpkg.com/firebase@9.23.0/compat/auth/index.js'
+    ], function(errFbAuth) {
+      try{ if (typeof firebase !== 'undefined' && firebase.auth) window._fbAuth = firebase.auth(); }catch(e){}
       // React (obligatoire)
       loadScript([
         'https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js',
@@ -2732,6 +2757,7 @@ function App() {
           boot();
         });
       });
+    });
     });
   });
 
