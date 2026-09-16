@@ -179,12 +179,12 @@ window.CLUB = {
         <button id="role-btn-admin" onclick="selectEvalRole('admin')" style="flex:1;padding:10px 4px;border:1.5px solid #DDD;border-radius:8px;background:transparent;color:#888;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s">🔑 Admin</button>
       </div>
       <label style="font-size:10px;font-weight:700;color:#1F1F1F;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Mot de passe</label>
-      <input id="pw-input" type="password" placeholder="••••••••" autocomplete="current-password"
+      <div style="position:relative"><input id="pw-input" type="password" placeholder="••••••••" autocomplete="current-password"
         style="width:100%;border:1.5px solid #DDD;border-radius:8px;padding:12px 14px;font-size:18px;outline:none;margin-bottom:8px;box-sizing:border-box;-webkit-appearance:none;transition:border-color .2s"
         onfocus="this.style.borderColor='var(--accent,#F59E0B)'" onblur="this.style.borderColor='#DDD'"
         oninput="document.getElementById('pw-err').style.display='none'"
         onkeydown="if(event.key==='Enter')pwLogin()"
-      >
+      ><button type="button" tabindex="-1" onclick="togglePwEye('pw-input',this)" title="Afficher / masquer le mot de passe" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);border:none;background:none;font-size:16px;cursor:pointer;padding:2px;line-height:1">👁</button></div>
       <div id="pw-err" style="color:#DC2626;font-size:12px;margin-bottom:9px;display:none;text-align:center">❌ Mot de passe incorrect</div>
       <button onclick="pwLogin()" style="width:100%;padding:13px;background:var(--accent,#F59E0B);color:#1F1F1F;border:none;border-radius:8px;font-weight:900;font-size:14px;letter-spacing:1px;cursor:pointer;text-transform:uppercase;transition:filter .15s" onmouseover="this.style.filter='brightness(1.07)'" onmouseout="this.style.filter='none'">🔓 Connexion</button>
       <div style="margin-top:14px;text-align:center;font-size:10px;color:#BBB">Julien Boulet - Cyberfun © 2026 — Tous droits réservés</div>
@@ -212,6 +212,14 @@ function selectEvalRole(r){
 }
 function _chk(){try{var d=JSON.parse(localStorage.getItem(_KA)||'{}');if(d.ok&&Date.now()<(d.exp||0)){window.EVAL_ROLE=d.role||'admin';return true;}return false;}catch(e){return false;}}
 function _unlock(){var o=document.getElementById('pw-overlay');if(o){o.style.opacity='0';setTimeout(function(){o.style.display='none';},280);}}
+function togglePwEye(id, btn){
+  var i = document.getElementById(id);
+  if(!i) return;
+  var show = (i.type === 'password');
+  i.type = show ? 'text' : 'password';
+  btn.textContent = show ? '\u{1F648}' : '\u{1F441}';
+  i.focus();
+}
 function pwLogin(){var i=document.getElementById('pw-input');if(!i)return;
   var val=i.value;
   var grant=function(){localStorage.setItem(_KA,JSON.stringify({ok:true,role:_evalRole,exp:Date.now()+86400000}));window.EVAL_ROLE=_evalRole;_unlock();_resetIdle();};
