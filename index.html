@@ -2489,6 +2489,8 @@ function App() {
       var app = firebase.apps && firebase.apps.length > 0
         ? firebase.apps[0]
         : firebase.initializeApp(FB_CFG);
+      // Authentification : ne peut être initialisée qu'APRÈS initializeApp
+      try{ if (firebase.auth) window._fbAuth = firebase.auth(); }catch(e){}
       var db  = firebase.firestore(app);
       // ── Liaison optionnelle : lire les élèves de l'app de suivi (même projet Firebase) ──
       window.fetchSuiviStudents = function() {
@@ -2760,7 +2762,7 @@ function App() {
       'https://cdn.jsdelivr.net/npm/firebase@9.23.0/compat/auth/index.js',
       'https://unpkg.com/firebase@9.23.0/compat/auth/index.js'
     ], function(errFbAuth) {
-      try{ if (typeof firebase !== 'undefined' && firebase.auth) window._fbAuth = firebase.auth(); }catch(e){}
+      // (l'initialisation de l'authentification se fait dans initFirebase, après initializeApp)
       // React (obligatoire)
       loadScript([
         'https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js',
